@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      try {
+        const desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+        if (desc && !desc.set && desc.configurable) {
+          let f = desc.value || (desc.get ? desc.get() : window.fetch);
+          Object.defineProperty(window, 'fetch', {
+            get: () => f,
+            set: (v) => { f = v; },
+            configurable: true,
+            enumerable: true
+          });
+        }
+      } catch (e) {}
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Google AI Studio App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

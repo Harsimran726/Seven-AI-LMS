@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "Staff": {
+      "title": "Staff",
+      "description": "Staff members using the application.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["name", "email", "createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Students enrolled at Seven AI institute.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "course": { "type": "string" },
+        "batch": { "type": "string" },
+        "createdByStaffId": { "type": "string" },
+        "createdByStaffName": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["name", "course", "createdByStaffId", "createdByStaffName", "createdAt", "updatedAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Fee payment record.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "description": "ISO date string" },
+        "monthForFee": { "type": "string", "description": "YYYY-MM format" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "online"] },
+        "staffId": { "type": "string" },
+        "staffName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["studentId", "amount", "date", "monthForFee", "paymentMethod", "staffId", "staffName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "staff/{staffId}": {
+      "schema": { "$ref": "#/entities/Staff" },
+      "description": "Registered staff members"
+    },
+    "students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Registered students"
+    },
+    "transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Fee transactions"
+    }
+  }
+}

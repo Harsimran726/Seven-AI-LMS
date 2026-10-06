@@ -1,0 +1,6 @@
+{
+  "name": "Seven AI Fees Collection",
+  "description": "A fees collection system for Seven AI institute to manage students, track fees, and generate monthly reminders.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
