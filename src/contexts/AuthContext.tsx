@@ -34,12 +34,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribeProfile: () => void;
+    let unsubscribeProfile: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
       setUser(currentUser);
       
-      if (currentUser?.emailVerified) {
+      if (currentUser) {
          try {
            const staffRef = doc(db, 'staff', currentUser.uid);
            const staffSnap = await getDoc(staffRef);

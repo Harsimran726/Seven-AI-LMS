@@ -51,8 +51,27 @@ interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  if (!error) return;
+  const errMsg = error instanceof Error ? error.message : String(error);
+  const errName = error instanceof Error ? error.name : '';
+  const errCode = (error as { code?: string })?.code;
+
+  // Ignore signal abort errors when listeners are cleaned up or unmounted
+  if (
+    errName === 'AbortError' || 
+    errMsg.includes('aborted') || 
+    errMsg.includes('signal is aborted') ||
+    errMsg.includes('AbortError') ||
+    errMsg.includes('cancelled') ||
+    errMsg.includes('canceled') ||
+    errCode === 'cancelled' ||
+    errCode === 'canceled'
+  ) {
+    return;
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,

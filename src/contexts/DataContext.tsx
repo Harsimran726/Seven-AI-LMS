@@ -31,7 +31,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !user.emailVerified) {
+    if (!user) {
       setStudents([]);
       setTransactions([]);
       setAttendances([]);

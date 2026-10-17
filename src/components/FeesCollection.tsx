@@ -3,36 +3,55 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { format } from 'date-fns';
-import { CheckCircle2, Trash2, UserCheck, Wallet } from 'lucide-react';
+import { format, parseISO, isWithinInterval, startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns';
+import { 
+  CheckCircle2, Trash2, UserCheck, Wallet, Receipt, 
+  BarChart3, Calendar, Search, Filter, AlertCircle, ArrowUpRight,
+  CreditCard, ShieldCheck, Download, History
+} from 'lucide-react';
 import { FEES_COLLECTORS } from '../lib/constants';
+import { Student } from '../types';
+import { StudentPaymentHistoryModal } from './StudentPaymentHistoryModal';
+
+type FeeTab = 'fees' | 'history' | 'reports' | 'office';
 
 const FeesCollection = () => {
   const { students, transactions, officeEarnings } = useData();
-  const { user } = useAuth();
+  const { user, isAdmin, role } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<'fees' | 'office'>('fees');
+  const [activeTab, setActiveTab] = useState<FeeTab>('fees');
+  const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<Student | null>(null);
 
+  // Search & Filter States
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Date Range Filter for Reports
+  const [startDate, setStartDate] = useState(format(startOfYear(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(endOfYear(new Date()), 'yyyy-MM-dd'));
+
+  // Form Data for Fees
   const [formData, setFormData] = useState({
     studentId: '',
     amount: '',
     monthForFee: format(new Date(), 'yyyy-MM'),
-    paymentMethod: 'cash',
-    collectedBy: ''
+    paymentMethod: 'cash' as 'cash' | 'online',
+    collectedBy: FEES_COLLECTORS[0] || 'Harsimran Singh'
   });
 
+  // Form Data for Office
   const [officeFormData, setOfficeFormData] = useState({
     title: '',
     amount: '',
     date: format(new Date(), 'yyyy-MM-dd'),
-    paymentMethod: 'cash',
-    collectedBy: ''
+    paymentMethod: 'cash' as 'cash' | 'online',
+    collectedBy: FEES_COLLECTORS[0] || 'Harsimran Singh'
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Computed Collector Stats
   const collectorStats = useMemo(() => {
     const statsMap: Record<string, { total: number; count: number; cash: number; online: number }> = {};
     
@@ -40,9 +59,9 @@ const FeesCollection = () => {
       statsMap[person] = { total: 0, count: 0, cash: 0, online: 0 };
     });
 
-    const dataset = activeTab === 'fees'
-      ? transactions.map(t => ({ amount: t.amount, person: t.collectedBy || t.staffName || 'Unassigned', method: t.paymentMethod }))
-      : officeEarnings.map(o => ({ amount: o.amount, person: o.collectedBy || o.staffName || 'Unassigned', method: o.paymentMethod }));
+    const dataset = activeTab === 'office'
+      ? officeEarnings.map(o => ({ amount: o.amount, person: o.collectedBy || o.staffName || 'Unassigned', method: o.paymentMethod }))
+      : transactions.map(t => ({ amount: t.amount, person: t.collectedBy || t.staffName || 'Unassigned', method: t.paymentMethod }));
 
     dataset.forEach(item => {
       const p = item.person.trim() || 'Unassigned';
@@ -60,6 +79,64 @@ const FeesCollection = () => {
 
     return Object.entries(statsMap).map(([person, data]) => ({ person, ...data }));
   }, [transactions, officeEarnings, activeTab]);
+
+  // Report Analytics Calculations
+  const reportAnalytics = useMemo(() => {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+
+    // Filter transactions within range
+    const rangeTxns = transactions.filter(t => {
+      try {
+        const d = parseISO(t.date || new Date(t.createdAt).toISOString());
+        return isWithinInterval(d, { start, end });
+      } catch (e) {
+        return true;
+      }
+    });
+
+    // Payment Method Breakdown
+    const totalCash = rangeTxns.filter(t => t.paymentMethod === 'cash').reduce((sum, t) => sum + t.amount, 0);
+    const totalOnline = rangeTxns.filter(t => t.paymentMethod === 'online').reduce((sum, t) => sum + t.amount, 0);
+    const totalRevenue = totalCash + totalOnline;
+
+    // Academic Year Revenue Summary
+    const yearStart = startOfYear(new Date());
+    const yearEnd = endOfYear(new Date());
+    const yearTxns = transactions.filter(t => {
+      try {
+        const d = parseISO(t.date || new Date(t.createdAt).toISOString());
+        return isWithinInterval(d, { start: yearStart, end: yearEnd });
+      } catch (e) {
+        return true;
+      }
+    });
+    const academicYearTotal = yearTxns.reduce((sum, t) => sum + t.amount, 0);
+
+    // Outstanding Dues Detection (Students who haven't paid for current month)
+    const currentMonthStr = format(new Date(), 'yyyy-MM');
+    const studentsWithDues = students.map(st => {
+      const studentTxns = transactions.filter(t => t.studentId === st.id);
+      const hasPaidCurrentMonth = studentTxns.some(t => t.monthForFee === currentMonthStr);
+      const lastPayment = studentTxns.sort((a, b) => b.createdAt - a.createdAt)[0];
+
+      return {
+        student: st,
+        hasPaidCurrentMonth,
+        lastPaymentMonth: lastPayment ? lastPayment.monthForFee : 'Never',
+        totalPaid: studentTxns.reduce((sum, t) => sum + t.amount, 0)
+      };
+    }).filter(s => !s.hasPaidCurrentMonth);
+
+    return {
+      totalRevenue,
+      totalCash,
+      totalOnline,
+      academicYearTotal,
+      txnsCount: rangeTxns.length,
+      studentsWithDues
+    };
+  }, [transactions, students, startDate, endDate]);
 
   const handleCollect = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +159,7 @@ const FeesCollection = () => {
         createdAt: Date.now()
       });
       setSuccess(true);
-      setFormData(prev => ({...prev, studentId: '', amount: '', paymentMethod: 'cash', collectedBy: ''}));
+      setFormData(prev => ({...prev, studentId: '', amount: '' }));
       
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -112,7 +189,7 @@ const FeesCollection = () => {
         createdAt: Date.now()
       });
       setSuccess(true);
-      setOfficeFormData(prev => ({...prev, title: '', amount: '', paymentMethod: 'cash', collectedBy: ''}));
+      setOfficeFormData(prev => ({...prev, title: '', amount: '' }));
       
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -135,43 +212,65 @@ const FeesCollection = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Billing & Collection</h2>
-        <p className="text-slate-500 text-sm mt-1">Record and manage fee transactions</p>
-      </div>
-      
-      <div className="flex border-b border-slate-200 gap-6">
-        <button 
-          onClick={() => setActiveTab('fees')}
-          className={`pb-3 text-sm font-bold tracking-widest uppercase transition-colors relative ${activeTab === 'fees' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          Fees Collection
-          {activeTab === 'fees' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t" />}
-        </button>
-        <button 
-          onClick={() => setActiveTab('office')}
-          className={`pb-3 text-sm font-bold tracking-widest uppercase transition-colors relative ${activeTab === 'office' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          Office Earnings
-          {activeTab === 'office' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t" />}
-        </button>
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Billing & Fee Collection System</h2>
+          <p className="text-slate-500 text-sm mt-0.5">Manage student fee payments, payment history ledgers, revenue analytics & office earnings</p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
+          <button 
+            onClick={() => setActiveTab('fees')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'fees' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            FEE COLLECTION
+          </button>
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            STUDENT PAYMENT HISTORY
+          </button>
+          <button 
+            onClick={() => setActiveTab('reports')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'reports' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            REVENUE REPORTS
+          </button>
+          <button 
+            onClick={() => setActiveTab('office')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'office' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            OFFICE EARNINGS
+          </button>
+        </div>
       </div>
 
-      {/* Collector Stats Breakdown Cards */}
+      {/* Collector Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {collectorStats.map(stat => (
-          <div key={stat.person} className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between">
+          <div key={stat.person} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <UserCheck size={14} className="text-indigo-600" />
                 {stat.person}
               </span>
-              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                {stat.count} {stat.count === 1 ? 'entry' : 'entries'}
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
+                {stat.count} Transactions
               </span>
             </div>
             <div className="mt-2">
-              <p className="text-xl font-bold text-slate-900">₹{stat.total.toLocaleString()}</p>
+              <p className="text-xl font-black text-slate-900 tabular-nums font-mono">₹{stat.total.toLocaleString()}</p>
               <div className="flex gap-3 text-[10px] font-semibold text-slate-500 mt-1">
                 <span>Cash: ₹{stat.cash.toLocaleString()}</span>
                 <span>•</span>
@@ -181,21 +280,26 @@ const FeesCollection = () => {
           </div>
         ))}
       </div>
-      
-      {activeTab === 'fees' ? (
+
+      {/* TAB 1: RECORD FEE COLLECTION */}
+      {activeTab === 'fees' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-white p-6 border border-slate-200 rounded-lg h-fit">
-            <h3 className="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest border-b border-slate-100 pb-3">Record New Fee</h3>
-            <form onSubmit={handleCollect} className="space-y-5">
+          {/* Record Fee Form */}
+          <div className="lg:col-span-1 bg-white p-6 border border-slate-200 rounded-2xl shadow-sm h-fit space-y-4">
+            <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest border-b border-slate-100 pb-3 flex items-center gap-2">
+              <Receipt size={16} className="text-indigo-600" /> Record Student Fee
+            </h3>
+
+            <form onSubmit={handleCollect} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Select Student *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Select Student *</label>
                 <select 
                   required
                   value={formData.studentId}
                   onChange={e => setFormData({...formData, studentId: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-800"
                 >
-                  <option value="" disabled>-- Select a student --</option>
+                  <option value="" disabled>-- Choose Student --</option>
                   {students.map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({s.course})</option>
                   ))}
@@ -203,37 +307,37 @@ const FeesCollection = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Amount (₹) *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Amount Paid (₹) *</label>
                 <input 
                   type="number" 
                   required 
-                  min="0"
+                  min="1"
                   value={formData.amount}
                   onChange={e => setFormData({...formData, amount: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+                  placeholder="e.g. 5000"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm font-mono font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none" 
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fee For Month *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fee Month *</label>
                 <input 
                   type="month" 
                   required 
                   value={formData.monthForFee}
                   onChange={e => setFormData({...formData, monthForFee: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold" 
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fees Collected By *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Collected By *</label>
                 <select 
                   required
                   value={formData.collectedBy}
                   onChange={e => setFormData({...formData, collectedBy: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors text-slate-700"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-800"
                 >
-                  <option value="" disabled>-- Select Receiver --</option>
                   {FEES_COLLECTORS.map(collector => (
                     <option key={collector} value={collector}>{collector}</option>
                   ))}
@@ -241,45 +345,63 @@ const FeesCollection = () => {
               </div>
 
               <div>
-                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Payment Method *</label>
-                 <div className="flex gap-3">
-                    <label className={`flex-1 border rounded p-3 cursor-pointer flex items-center justify-center gap-2 transition-colors ${formData.paymentMethod === 'cash' ? 'border-amber-500 bg-amber-50/50 text-amber-700 font-bold' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                       <input type="radio" className="hidden" name="payment_method" value="cash" checked={formData.paymentMethod === 'cash'} onChange={() => setFormData({...formData, paymentMethod: 'cash'})} />
-                       <span className="text-[11px] uppercase tracking-widest font-bold">Cash</span>
-                    </label>
-                    <label className={`flex-1 border rounded p-3 cursor-pointer flex items-center justify-center gap-2 transition-colors ${formData.paymentMethod === 'online' ? 'border-indigo-500 bg-indigo-50/50 text-indigo-700 font-bold' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                       <input type="radio" className="hidden" name="payment_method" value="online" checked={formData.paymentMethod === 'online'} onChange={() => setFormData({...formData, paymentMethod: 'online'})} />
-                       <span className="text-[11px] uppercase tracking-widest font-bold">Online</span>
-                    </label>
-                 </div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Payment Method *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, paymentMethod: 'cash'})}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      formData.paymentMethod === 'cash' ? 'bg-amber-500 text-white border-amber-600' : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    CASH
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, paymentMethod: 'online'})}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      formData.paymentMethod === 'online' ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    ONLINE
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2">
-                {success && <div className="mb-3 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 justify-center"><CheckCircle2 size={14} /> SAVED</div>}
+                {success && (
+                  <div className="mb-3 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 justify-center">
+                    <CheckCircle2 size={14} /> TRANSACTION RECORDED SUCCESSFULLY
+                  </div>
+                )}
                 <button 
                   disabled={submitting} 
                   type="submit" 
-                  className="w-full bg-indigo-600 text-white text-[11px] font-bold rounded shadow hover:bg-indigo-700 disabled:opacity-50 transition p-3 uppercase tracking-widest"
+                  className="w-full bg-indigo-600 text-white text-xs font-bold rounded-xl shadow hover:bg-indigo-700 disabled:opacity-50 transition py-3 uppercase tracking-wider"
                 >
-                  {submitting ? 'PROCESSING...' : 'RECORD FEE'}
+                  {submitting ? 'PROCESSING...' : 'RECORD FEE RECEIPT'}
                 </button>
               </div>
             </form>
           </div>
 
-          {/* History */}
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg flex flex-col overflow-hidden">
-            <h3 className="font-bold text-slate-700 m-6 mb-4 uppercase text-xs tracking-widest">Recent Transactions</h3>
+          {/* Recent Fee Transactions */}
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest">Recent Fee Transactions</h3>
+              <span className="text-xs text-slate-400 font-semibold">{transactions.length} Total Receipts</span>
+            </div>
+
             <div className="flex-1 overflow-x-auto">
               {transactions.length > 0 ? (
-                <table className="w-full text-left border-collapse whitespace-nowrap">
-                  <thead>
-                    <tr className="bg-slate-50 border-y border-slate-200">
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Date & Month</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Student Name</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Amount & Method</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Collected By</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500 text-right">Actions</th>
+                <table className="w-full text-left whitespace-nowrap text-xs">
+                  <thead className="bg-slate-50 border-y border-slate-100 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                    <tr>
+                      <th className="p-4">Date & Month</th>
+                      <th className="p-4">Student</th>
+                      <th className="p-4">Amount & Method</th>
+                      <th className="p-4">Collected By</th>
+                      <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -287,34 +409,34 @@ const FeesCollection = () => {
                       const student = students.find(s => s.id === t.studentId);
                       const isOnline = t.paymentMethod === 'online';
                       return (
-                        <tr key={t.id} className="hover:bg-slate-50 transition-colors text-sm">
-                          <td className="px-4 py-3">
-                             <p className="font-medium text-slate-700">{format(new Date(t.createdAt), 'dd MMM yyyy')}</p>
-                             <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">Fee: {t.monthForFee}</p>
+                        <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-4 py-3.5">
+                            <p className="font-bold text-slate-800">{format(new Date(t.createdAt), 'dd MMM yyyy')}</p>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase">Fee: {t.monthForFee}</p>
                           </td>
-                          <td className="px-4 py-3 font-bold text-slate-800">
-                             {student?.name || 'Unknown'}
+                          <td className="px-4 py-3.5">
+                            <p className="font-bold text-slate-900 text-sm">{student?.name || 'Unknown'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{student?.course}</p>
                           </td>
-                          <td className="px-4 py-3">
-                             <p className="font-bold text-slate-700">₹{t.amount.toLocaleString()}</p>
-                             <p className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 font-bold uppercase tracking-wider rounded ${isOnline ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
-                               {t.paymentMethod}
-                             </p>
+                          <td className="px-4 py-3.5">
+                            <p className="font-bold text-slate-900 tabular-nums font-mono text-sm">₹{t.amount.toLocaleString()}</p>
+                            <span className={`text-[9px] px-2 py-0.5 font-bold uppercase rounded ${
+                              isOnline ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}>
+                              {t.paymentMethod}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-[11px] text-slate-500 font-medium">
-                             {t.collectedBy || t.staffName}
+                          <td className="px-4 py-3.5 text-slate-600 font-semibold">
+                            {t.collectedBy || t.staffName}
                           </td>
-                          <td className="px-4 py-3 border-l border-slate-100 bg-indigo-50/20 text-right">
+                          <td className="px-4 py-3.5 text-right">
                             {deleteConfirmId === t.id ? (
-                              <div className="flex flex-col items-end gap-2">
-                                <span className="text-[9px] uppercase tracking-wider text-rose-500 font-bold">Delete?</span>
-                                <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] uppercase font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                                  <button onClick={() => handleDelete(t.id)} className="text-[10px] uppercase font-bold text-rose-600 hover:text-rose-700">Yes</button>
-                                </div>
+                              <div className="flex items-center justify-end gap-2">
+                                <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] font-bold text-slate-400">Cancel</button>
+                                <button onClick={() => handleDelete(t.id)} className="text-[10px] font-bold text-rose-600">Delete</button>
                               </div>
                             ) : (
-                              <button onClick={() => setDeleteConfirmId(t.id)} className="text-slate-400 hover:text-rose-600 transition-colors p-1">
+                              <button onClick={() => setDeleteConfirmId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 transition">
                                 <Trash2 size={16} />
                               </button>
                             )}
@@ -325,62 +447,283 @@ const FeesCollection = () => {
                   </tbody>
                 </table>
               ) : (
-                <div className="p-10 flex flex-col items-center justify-center text-slate-400 text-sm">
-                   No fee transactions recorded yet.
-                </div>
+                <div className="p-12 text-center text-slate-400 text-sm">No fee transactions recorded yet.</div>
               )}
             </div>
           </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-white p-6 border border-slate-200 rounded-lg h-fit">
-            <h3 className="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest border-b border-slate-100 pb-3">Record Office Earning</h3>
-            <form onSubmit={handleCollectOffice} className="space-y-5">
+      )}
+
+      {/* TAB 2: STUDENT PAYMENT HISTORY */}
+      {activeTab === 'history' && (
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search student name, course, batch..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+            <span className="text-xs font-bold text-slate-500">
+              Click any student row to view full payment history & print receipts
+            </span>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs whitespace-nowrap">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                <tr>
+                  <th className="px-5 py-3.5">Student Name</th>
+                  <th className="px-5 py-3.5">Course & Batch</th>
+                  <th className="px-5 py-3.5">Total Paid</th>
+                  <th className="px-5 py-3.5">Current Month Fee</th>
+                  <th className="px-5 py-3.5 text-right">Ledger Drawer</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {students
+                  .filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.course.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map(st => {
+                    const studentTxns = transactions.filter(t => t.studentId === st.id);
+                    const totalPaid = studentTxns.reduce((sum, t) => sum + t.amount, 0);
+                    const currentMonth = format(new Date(), 'yyyy-MM');
+                    const hasPaidCurrent = studentTxns.some(t => t.monthForFee === currentMonth);
+
+                    return (
+                      <tr 
+                        key={st.id} 
+                        onClick={() => setSelectedStudentForHistory(st)}
+                        className="hover:bg-indigo-50/50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-5 py-4 font-bold text-slate-900 text-sm">
+                          {st.name}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="font-semibold text-slate-700">{st.course}</span>
+                          {st.batch && <span className="text-[10px] text-slate-400 block font-medium">Batch: {st.batch}</span>}
+                        </td>
+                        <td className="px-5 py-4 font-bold text-slate-900 tabular-nums font-mono text-sm">
+                          ₹{totalPaid.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-4">
+                          {hasPaidCurrent ? (
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
+                              PAID ({currentMonth})
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
+                              PENDING / DUE
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <button className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-[11px] px-3 py-1.5 rounded-lg border border-indigo-200 flex items-center gap-1 ml-auto">
+                            <History size={13} /> VIEW HISTORY
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: REVENUE REPORTS & OUTSTANDING DUES */}
+      {activeTab === 'reports' && (
+        <div className="space-y-6">
+          {/* Date Range Picker Bar */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="text-indigo-600" size={20} />
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Title / Description *</label>
+                <h3 className="font-bold text-slate-900 text-sm">Advanced Revenue Filter & Date Range</h3>
+                <p className="text-xs text-slate-500">Filter financial statistics across custom billing timeframes</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Report Stat Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filtered Revenue</span>
+              <span className="text-2xl font-black text-slate-900 tabular-nums font-mono mt-1 block">
+                ₹{reportAnalytics.totalRevenue.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-slate-500 mt-1 block font-semibold">{reportAnalytics.txnsCount} Transactions</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-amber-100 shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
+              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Cash Collection</span>
+              <span className="text-2xl font-black text-amber-900 tabular-nums font-mono mt-1 block">
+                ₹{reportAnalytics.totalCash.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-amber-700 mt-1 block font-semibold">
+                {reportAnalytics.totalRevenue > 0 ? ((reportAnalytics.totalCash / reportAnalytics.totalRevenue) * 100).toFixed(0) : 0}% of Total
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white">
+              <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">Online Collection</span>
+              <span className="text-2xl font-black text-indigo-900 tabular-nums font-mono mt-1 block">
+                ₹{reportAnalytics.totalOnline.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-indigo-700 mt-1 block font-semibold">
+                {reportAnalytics.totalRevenue > 0 ? ((reportAnalytics.totalOnline / reportAnalytics.totalRevenue) * 100).toFixed(0) : 0}% of Total
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
+              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Academic Year Summary</span>
+              <span className="text-2xl font-black text-emerald-900 tabular-nums font-mono mt-1 block">
+                ₹{reportAnalytics.academicYearTotal.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-emerald-700 mt-1 block font-semibold">Jan - Dec {format(new Date(), 'yyyy')}</span>
+            </div>
+          </div>
+
+          {/* Outstanding Dues Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <AlertCircle size={18} className="text-amber-600" /> Outstanding Dues & Pending Payments List
+                </h3>
+                <p className="text-xs text-slate-500">Students who haven't paid fee for current month ({format(new Date(), 'MMMM yyyy')})</p>
+              </div>
+              <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                {reportAnalytics.studentsWithDues.length} Students Pending
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3.5">Student Name</th>
+                    <th className="px-5 py-3.5">Course Name</th>
+                    <th className="px-5 py-3.5">Last Fee Paid Month</th>
+                    <th className="px-5 py-3.5">Total Paid Till Date</th>
+                    <th className="px-5 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {reportAnalytics.studentsWithDues.map(item => (
+                    <tr key={item.student.id} className="hover:bg-amber-50/30 transition-colors">
+                      <td className="px-5 py-4 font-bold text-slate-900 text-sm">
+                        {item.student.name}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {item.student.course}
+                      </td>
+                      <td className="px-5 py-4 font-bold text-amber-800">
+                        {item.lastPaymentMonth}
+                      </td>
+                      <td className="px-5 py-4 font-bold text-slate-900 tabular-nums font-mono">
+                        ₹{item.totalPaid.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedStudentForHistory(item.student);
+                          }}
+                          className="bg-indigo-600 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
+                        >
+                          COLLECT FEE
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {reportAnalytics.studentsWithDues.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-emerald-600 font-bold text-sm">
+                        All students are fully up to date with their fees for this month!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: OFFICE EARNINGS */}
+      {activeTab === 'office' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 bg-white p-6 border border-slate-200 rounded-2xl shadow-sm h-fit space-y-4">
+            <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest border-b border-slate-100 pb-3">Record Office Earning</h3>
+            <form onSubmit={handleCollectOffice} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Title / Description *</label>
                 <input 
                   type="text" 
                   required 
                   value={officeFormData.title}
                   onChange={e => setOfficeFormData({...officeFormData, title: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
-                  placeholder="e.g. Sale of books"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold" 
+                  placeholder="e.g. Book sales / Certificate fee"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Amount (₹) *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Amount (₹) *</label>
                 <input 
                   type="number" 
                   required 
-                  min="0"
+                  min="1"
                   value={officeFormData.amount}
                   onChange={e => setOfficeFormData({...officeFormData, amount: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm font-mono font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none" 
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Date *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Date *</label>
                 <input 
                   type="date" 
                   required 
                   value={officeFormData.date}
                   onChange={e => setOfficeFormData({...officeFormData, date: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold" 
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Collected By *</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Collected By *</label>
                 <select 
                   required
                   value={officeFormData.collectedBy}
                   onChange={e => setOfficeFormData({...officeFormData, collectedBy: e.target.value})}
-                  className="w-full border border-slate-200 bg-slate-50 rounded p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors text-slate-700"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-800"
                 >
-                  <option value="" disabled>-- Select Receiver --</option>
                   {FEES_COLLECTORS.map(collector => (
                     <option key={collector} value={collector}>{collector}</option>
                   ))}
@@ -388,77 +731,86 @@ const FeesCollection = () => {
               </div>
 
               <div>
-                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Payment Method *</label>
-                 <div className="flex gap-3">
-                    <label className={`flex-1 border rounded p-3 cursor-pointer flex items-center justify-center gap-2 transition-colors ${officeFormData.paymentMethod === 'cash' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 font-bold' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                       <input type="radio" className="hidden" name="office_payment_method" value="cash" checked={officeFormData.paymentMethod === 'cash'} onChange={() => setOfficeFormData({...officeFormData, paymentMethod: 'cash'})} />
-                       <span className="text-[11px] uppercase tracking-widest font-bold">Cash</span>
-                    </label>
-                    <label className={`flex-1 border rounded p-3 cursor-pointer flex items-center justify-center gap-2 transition-colors ${officeFormData.paymentMethod === 'online' ? 'border-indigo-500 bg-indigo-50/50 text-indigo-700 font-bold' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                       <input type="radio" className="hidden" name="office_payment_method" value="online" checked={officeFormData.paymentMethod === 'online'} onChange={() => setOfficeFormData({...officeFormData, paymentMethod: 'online'})} />
-                       <span className="text-[11px] uppercase tracking-widest font-bold">Online</span>
-                    </label>
-                 </div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Payment Method *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOfficeFormData({...officeFormData, paymentMethod: 'cash'})}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      officeFormData.paymentMethod === 'cash' ? 'bg-amber-500 text-white border-amber-600' : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    CASH
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOfficeFormData({...officeFormData, paymentMethod: 'online'})}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      officeFormData.paymentMethod === 'online' ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    ONLINE
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2">
-                {success && <div className="mb-3 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 justify-center"><CheckCircle2 size={14} /> SAVED</div>}
+                {success && <div className="mb-3 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 justify-center"><CheckCircle2 size={14} /> RECORD SAVED</div>}
                 <button 
                   disabled={submitting} 
                   type="submit" 
-                  className="w-full bg-emerald-600 text-white text-[11px] font-bold rounded shadow hover:bg-emerald-700 disabled:opacity-50 transition p-3 uppercase tracking-widest"
+                  className="w-full bg-emerald-600 text-white text-xs font-bold rounded-xl shadow hover:bg-emerald-700 disabled:opacity-50 transition py-3 uppercase tracking-wider"
                 >
-                  {submitting ? 'PROCESSING...' : 'RECORD EARNING'}
+                  {submitting ? 'PROCESSING...' : 'RECORD OFFICE EARNING'}
                 </button>
               </div>
             </form>
           </div>
 
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg flex flex-col overflow-hidden">
-            <h3 className="font-bold text-slate-700 m-6 mb-4 uppercase text-xs tracking-widest">Office Earnings History</h3>
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+            <h3 className="font-bold text-slate-800 p-5 border-b border-slate-100 uppercase text-xs tracking-widest">Office Earnings History</h3>
             <div className="flex-1 overflow-x-auto">
               {officeEarnings.length > 0 ? (
-                <table className="w-full text-left border-collapse whitespace-nowrap">
-                  <thead>
-                    <tr className="bg-slate-50 border-y border-slate-200">
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Date</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Title</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Amount & Method</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500">Collected By</th>
-                      <th className="p-4 text-[10px] tracking-widest uppercase font-bold text-slate-500 text-right">Actions</th>
+                <table className="w-full text-left whitespace-nowrap text-xs">
+                  <thead className="bg-slate-50 border-y border-slate-100 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                    <tr>
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Title</th>
+                      <th className="p-4">Amount & Method</th>
+                      <th className="p-4">Collected By</th>
+                      <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {officeEarnings.map(t => {
                       const isOnline = t.paymentMethod === 'online';
                       return (
-                        <tr key={t.id} className="hover:bg-slate-50 transition-colors text-sm">
-                          <td className="px-4 py-3">
-                             <p className="font-medium text-slate-700">{format(new Date(t.date), 'dd MMM yyyy')}</p>
+                        <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-4 py-3.5 font-semibold text-slate-700">
+                            {format(new Date(t.date), 'dd MMM yyyy')}
                           </td>
-                          <td className="px-4 py-3 font-bold text-slate-800">
-                             {t.title}
+                          <td className="px-4 py-3.5 font-bold text-slate-900">
+                            {t.title}
                           </td>
-                          <td className="px-4 py-3">
-                             <p className="font-bold text-slate-700">₹{t.amount.toLocaleString()}</p>
-                             <p className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 font-bold uppercase tracking-wider rounded ${isOnline ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                               {t.paymentMethod}
-                             </p>
+                          <td className="px-4 py-3.5">
+                            <p className="font-bold text-slate-900 tabular-nums font-mono text-sm">₹{t.amount.toLocaleString()}</p>
+                            <span className={`text-[9px] px-2 py-0.5 font-bold uppercase rounded ${
+                              isOnline ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            }`}>
+                              {t.paymentMethod}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-[11px] text-slate-500 font-medium">
-                             {t.collectedBy || t.staffName}
+                          <td className="px-4 py-3.5 text-slate-600 font-semibold">
+                            {t.collectedBy || t.staffName}
                           </td>
-                          <td className="px-4 py-3 border-l border-slate-100 bg-emerald-50/20 text-right">
+                          <td className="px-4 py-3.5 text-right">
                             {deleteConfirmId === t.id ? (
-                              <div className="flex flex-col items-end gap-2">
-                                <span className="text-[9px] uppercase tracking-wider text-rose-500 font-bold">Delete?</span>
-                                <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] uppercase font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                                  <button onClick={() => handleDelete(t.id, true)} className="text-[10px] uppercase font-bold text-rose-600 hover:text-rose-700">Yes</button>
-                                </div>
+                              <div className="flex items-center justify-end gap-2">
+                                <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] font-bold text-slate-400">Cancel</button>
+                                <button onClick={() => handleDelete(t.id, true)} className="text-[10px] font-bold text-rose-600">Delete</button>
                               </div>
                             ) : (
-                              <button onClick={() => setDeleteConfirmId(t.id)} className="text-slate-400 hover:text-rose-600 transition-colors p-1">
+                              <button onClick={() => setDeleteConfirmId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 transition">
                                 <Trash2 size={16} />
                               </button>
                             )}
@@ -469,13 +821,19 @@ const FeesCollection = () => {
                   </tbody>
                 </table>
               ) : (
-                <div className="p-10 flex flex-col items-center justify-center text-slate-400 text-sm">
-                   No office earnings recorded yet.
-                </div>
+                <div className="p-12 text-center text-slate-400 text-sm">No office earnings recorded yet.</div>
               )}
             </div>
           </div>
         </div>
+      )}
+
+      {/* STUDENT PAYMENT HISTORY MODAL / DRAWER */}
+      {selectedStudentForHistory && (
+        <StudentPaymentHistoryModal
+          student={selectedStudentForHistory}
+          onClose={() => setSelectedStudentForHistory(null)}
+        />
       )}
     </div>
   );

@@ -54,7 +54,7 @@ const MainApp = () => {
     );
   }
 
-  if (!user || !user.emailVerified) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 font-sans text-slate-900 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
         <div className="bg-white p-8 border border-slate-200/20 shadow-2xl rounded-2xl max-w-sm w-full text-center relative overflow-hidden backdrop-blur-xl">
