@@ -248,11 +248,15 @@ const StaffManagement = () => {
                     <tr key={staff.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
-                            isAdminUser ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
-                          }`}>
-                            {staff.name?.[0]?.toUpperCase() || staff.email?.[0]?.toUpperCase() || 'U'}
-                          </div>
+                          {staff.photoURL ? (
+                            <img src={staff.photoURL} alt={staff.name} className="w-9 h-9 rounded-full object-cover border border-indigo-300 shadow-sm" />
+                          ) : (
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
+                              isAdminUser ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+                            }`}>
+                              {staff.name?.[0]?.toUpperCase() || staff.email?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-slate-900 text-sm">{staff.name || 'Unnamed User'}</p>
                             <p className="text-slate-500 font-medium">{staff.email}</p>

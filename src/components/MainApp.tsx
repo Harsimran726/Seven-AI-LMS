@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useBranding } from '../contexts/BrandingContext';
 import { DataProvider } from '../contexts/DataContext';
 import { loginWithGoogle, logout } from '../lib/firebase';
 import { 
   LayoutDashboard, Users, Receipt, Bell, LogOut, Loader2, 
-  Coins, UserCheck, ShieldCheck, Mail, BookOpen, Contact, Shield, User, KeyRound, Sparkles
+  Coins, UserCheck, ShieldCheck, Mail, BookOpen, Contact, Shield, User, KeyRound, Sparkles, AlertCircle, Camera, Settings
 } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Students from './Students';
@@ -15,14 +16,55 @@ import Expenses from './Expenses';
 import StaffManagement from './StaffManagement';
 import Batches from './Batches';
 import Leads from './Leads';
+import { ProfileAndBrandingModal } from './ProfileAndBrandingModal';
 
 type Tab = 'dashboard' | 'students' | 'batches' | 'leads' | 'fees' | 'reminders' | 'attendance' | 'expenses' | 'staff';
 
 const MainApp = () => {
   const { user, profile, loading, isAdmin, isStaff, hasAccess } = useAuth();
+  const { branding } = useBranding();
   
   // Default tab based on role
   const [activeTab, setActiveTab] = useState<Tab>('leads');
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Settings & Profile Photo Modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [modalDefaultTab, setModalDefaultTab] = useState<'profile' | 'branding'>('profile');
+
+  const handleOpenSettings = (tab: 'profile' | 'branding') => {
+    setModalDefaultTab(tab);
+    setShowSettingsModal(true);
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsSigningIn(true);
+    setAuthError(null);
+    try {
+      await loginWithGoogle();
+    } catch (err: any) {
+      console.error("Sign-in error:", err);
+      const errCode = err?.code || '';
+      const errMsg = err?.message || String(err);
+
+      if (errCode === 'auth/unauthorized-domain') {
+        setAuthError(
+          `Domain Unauthorized: '${window.location.hostname}' is not authorized in Firebase Console. Go to Firebase Console -> Authentication -> Settings -> Authorized Domains and add this domain.`
+        );
+      } else if (errCode === 'auth/popup-blocked') {
+        setAuthError('Sign-in popup was blocked by your browser. Please allow popups or try again.');
+      } else if (errCode === 'auth/popup-closed-by-user' || errCode === 'auth/cancelled-popup-request') {
+        setAuthError('Sign-in popup was closed before completing. Please click below to try again.');
+      } else if (errCode === 'auth/network-request-failed') {
+        setAuthError('Network error during sign-in. Please check your internet connection.');
+      } else {
+        setAuthError(errMsg || 'An error occurred during Google sign in.');
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
 
   // Enforce access control for staff members: if staff tries to visit admin-only tab, redirect to 'leads'
   useEffect(() => {
@@ -60,22 +102,45 @@ const MainApp = () => {
         <div className="bg-white p-8 border border-slate-200/20 shadow-2xl rounded-2xl max-w-sm w-full text-center relative overflow-hidden backdrop-blur-xl">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           
-          <img src="/seven-ai-logo.png" alt="Seven AI" className="w-20 h-20 mx-auto mb-4 bg-slate-50 p-1.5 rounded-full border-2 border-indigo-500 shadow-md" />
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">Seven AI</h1>
-          <p className="text-slate-500 mb-6 text-[10px] uppercase tracking-[0.2em] font-bold">Kal ke liye aaj se smart bano</p>
+          <img 
+            src={branding.logoUrl || "/seven-ai-logo.png"} 
+            alt={branding.platformName || "Seven AI"} 
+            className="w-20 h-20 mx-auto mb-4 bg-slate-50 p-1.5 rounded-full border-2 border-indigo-500 shadow-md object-contain" 
+          />
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">{branding.platformName || "Seven AI"}</h1>
+          <p className="text-slate-500 mb-6 text-[10px] uppercase tracking-[0.2em] font-bold">{branding.tagline || "Kal ke liye aaj se smart bano"}</p>
 
-          <div className="bg-indigo-50/70 p-3 rounded-xl border border-indigo-100 text-left mb-6">
+          <div className="bg-indigo-50/70 p-3 rounded-xl border border-indigo-100 text-left mb-4">
             <p className="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
               <KeyRound size={14} className="text-indigo-600" /> Authorized Access Only
             </p>
             <p className="text-[10px] text-indigo-700 mt-1">Sign in with Google to access Institute Management Portal.</p>
           </div>
 
+          {authError && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4 text-left flex items-start gap-2.5">
+              <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-rose-900">Authentication Failed</p>
+                <p className="text-[10px] text-rose-700 mt-0.5 leading-relaxed">{authError}</p>
+              </div>
+            </div>
+          )}
+
           <button 
-            onClick={loginWithGoogle}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
+            onClick={handleGoogleLogin}
+            disabled={isSigningIn}
+            className="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-60 transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
           >
-            <Sparkles size={16} /> Sign In With Google
+            {isSigningIn ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Signing In...
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} /> Sign In With Google
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -128,16 +193,34 @@ const MainApp = () => {
     );
   }
 
+  const userPhoto = profile?.photoURL || user?.photoURL;
+
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans text-slate-900">
       {/* Sidebar */}
       <aside className="w-64 bg-indigo-950 text-slate-200 flex flex-col border-r border-indigo-900 overflow-y-auto">
         {/* Brand Header */}
-        <div className="p-6 pb-4">
+        <div className="p-6 pb-4 relative group">
           <div className="flex flex-col items-center gap-2">
-            <img src="/seven-ai-logo.png" alt="Seven AI" className="w-14 h-14 bg-white p-1 rounded-full border-2 border-indigo-500 shadow-md" />
+            <div className="relative group">
+              <img 
+                src={branding.logoUrl || "/seven-ai-logo.png"} 
+                alt={branding.platformName || "Seven AI"} 
+                className="w-14 h-14 bg-white p-1 rounded-full border-2 border-indigo-500 shadow-md object-contain" 
+              />
+              {isAdmin && (
+                <button
+                  onClick={() => handleOpenSettings('branding')}
+                  className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-1 rounded-full shadow hover:bg-indigo-500 transition"
+                  title="Change Platform Logo"
+                >
+                  <Camera size={12} />
+                </button>
+              )}
+            </div>
+
             <h1 className="text-lg font-black tracking-tight text-white uppercase text-center">
-              Seven AI<br/>
+              {branding.platformName || "Seven AI"}<br/>
               <span className="text-[10px] text-indigo-400 uppercase tracking-[0.1em] font-medium">Institute Platform</span>
             </h1>
           </div>
@@ -227,11 +310,29 @@ const MainApp = () => {
         {/* Profile & Logout Footer */}
         <div className="p-4 mt-auto border-t border-indigo-900 bg-indigo-950/80">
           <div className="flex items-center gap-3 mb-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white ${
-              isAdmin ? 'bg-indigo-500 border border-indigo-300' : 'bg-emerald-600 border border-emerald-400'
-            }`}>
-              {profile?.name?.[0]?.toUpperCase() || user.displayName?.[0]?.toUpperCase() || 'U'}
-            </div>
+            <button
+              onClick={() => handleOpenSettings('profile')}
+              className="relative group shrink-0"
+              title="Change Profile Picture"
+            >
+              {userPhoto ? (
+                <img 
+                  src={userPhoto} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-indigo-400 shadow-md" 
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black text-white ${
+                  isAdmin ? 'bg-indigo-500 border border-indigo-300' : 'bg-emerald-600 border border-emerald-400'
+                }`}>
+                  {profile?.name?.[0]?.toUpperCase() || user.displayName?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                <Camera size={12} className="text-white" />
+              </div>
+            </button>
+
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white truncate">{profile?.name || user.displayName || 'User'}</p>
               
@@ -243,6 +344,14 @@ const MainApp = () => {
                 {isAdmin ? 'ADMINISTRATOR' : 'STAFF MEMBER'}
               </span>
             </div>
+
+            <button
+              onClick={() => handleOpenSettings(isAdmin ? 'branding' : 'profile')}
+              className="text-indigo-300 hover:text-white p-1.5 rounded-lg hover:bg-indigo-900/60 transition"
+              title="Image & Branding Settings"
+            >
+              <Settings size={16} />
+            </button>
           </div>
 
           <button 
@@ -272,7 +381,7 @@ const MainApp = () => {
              {/* Footer Context Bar */}
              <footer className="py-3 border-t border-slate-200 flex justify-between items-center mt-auto text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                <div className="flex items-center gap-3">
-                 <span>SEVEN AI PORTAL v2.5</span>
+                 <span>{branding.platformName || "SEVEN AI PORTAL"} v2.5</span>
                  <span className="text-slate-300">•</span>
                  <span>ROLE: {isAdmin ? 'ADMINISTRATOR (FULL ACCESS)' : 'STAFF MEMBER (RESTRICTED)'}</span>
                </div>
@@ -283,6 +392,13 @@ const MainApp = () => {
           </div>
         </DataProvider>
       </main>
+
+      {/* Profile & Platform Branding Settings Modal */}
+      <ProfileAndBrandingModal 
+        isOpen={showSettingsModal} 
+        onClose={() => setShowSettingsModal(false)} 
+        defaultTab={modalDefaultTab} 
+      />
     </div>
   );
 };

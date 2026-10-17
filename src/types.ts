@@ -4,7 +4,15 @@ export interface Staff {
   email: string;
   status: 'pending' | 'approved';
   role: 'admin' | 'staff';
+  photoURL?: string;
   createdAt: number;
+}
+
+export interface BrandingSettings {
+  logoUrl?: string;
+  platformName?: string;
+  tagline?: string;
+  updatedAt?: number;
 }
 
 export interface Student {

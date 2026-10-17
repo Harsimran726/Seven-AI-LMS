@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '../lib/firebase';
+import { auth, db, checkRedirectResult, handleFirestoreError, OperationType } from '../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { Staff } from '../types';
 
@@ -36,6 +36,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
 
+    // Process redirect result if returning from Google redirect auth
+    checkRedirectResult().catch((err) => {
+      console.warn("Check redirect result error:", err);
+    });
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (unsubscribeProfile) {
         unsubscribeProfile();
@@ -56,12 +61,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
              let preApprovedStatus: 'approved' | 'pending' = 'pending';
 
              if (currentUser.email) {
-               const preQuery = query(collection(db, 'staff'), where('email', '==', currentUser.email.toLowerCase()));
-               const preSnap = await getDocs(preQuery);
-               if (!preSnap.empty) {
-                 const preData = preSnap.docs[0].data();
-                 preApprovedRole = preData.role === 'admin' ? 'admin' : 'staff';
-                 preApprovedStatus = preData.status === 'approved' ? 'approved' : 'pending';
+               try {
+                 const preQuery = query(collection(db, 'staff'), where('email', '==', currentUser.email.toLowerCase()));
+                 const preSnap = await getDocs(preQuery);
+                 if (!preSnap.empty) {
+                   const preData = preSnap.docs[0].data();
+                   preApprovedRole = preData.role === 'admin' ? 'admin' : 'staff';
+                   preApprovedStatus = preData.status === 'approved' ? 'approved' : 'pending';
+                 }
+               } catch (preQueryErr) {
+                 console.warn("Could not query pre-approved staff role (non-critical):", preQueryErr);
                }
              }
 
@@ -88,12 +97,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   status: data.status || 'pending',
                   role: data.role || 'staff'
                 } as Staff);
+              } else {
+                setProfile(null);
               }
               setLoading(false);
-           }, () => setLoading(false));
+           }, (err) => {
+              console.error("Staff profile snapshot error:", err);
+              handleFirestoreError(err, OperationType.GET, `staff/${currentUser.uid}`);
+              setLoading(false);
+           });
 
          } catch (error) {
            console.error("Error creating or fetching staff record", error);
+           handleFirestoreError(error, OperationType.WRITE, `staff/${currentUser.uid}`);
            setLoading(false);
          }
       } else {

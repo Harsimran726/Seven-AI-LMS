@@ -33,7 +33,7 @@ service cloud.firestore {
     // --- Staff & Admin Access Directory ---
     match /staff/{staffId} {
       allow get: if isVerified();
-      allow list: if hasAccess();
+      allow list: if hasAccess() || (isVerified() && resource.data.email == request.auth.token.email);
       allow create: if isVerified() && (isAdmin() || request.auth.uid == staffId);
       allow update: if isVerified() && (isAdmin() || request.auth.uid == staffId);
       allow delete: if isAdmin();
@@ -73,6 +73,12 @@ service cloud.firestore {
     // --- Office Earnings Rules ---
     match /office_earnings/{earningId} {
       allow get, list, create, update, delete: if hasAccess();
+    }
+
+    // --- Settings & Branding Rules ---
+    match /settings/{settingId} {
+      allow get, list: if isVerified();
+      allow create, update, delete: if isAdmin();
     }
   }
 }
