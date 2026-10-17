@@ -5,7 +5,7 @@ import { DataProvider } from '../contexts/DataContext';
 import { loginWithGoogle, logout } from '../lib/firebase';
 import { 
   LayoutDashboard, Users, Receipt, Bell, LogOut, Loader2, 
-  Coins, UserCheck, ShieldCheck, Mail, BookOpen, Contact, Shield, User, KeyRound, Sparkles, AlertCircle, Camera, Settings
+  Coins, UserCheck, ShieldCheck, Mail, BookOpen, Contact, Shield, User, KeyRound, Sparkles, AlertCircle, Camera, Settings, Calendar
 } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Students from './Students';
@@ -16,9 +16,10 @@ import Expenses from './Expenses';
 import StaffManagement from './StaffManagement';
 import Batches from './Batches';
 import Leads from './Leads';
+import CalendarView from './CalendarView';
 import { ProfileAndBrandingModal } from './ProfileAndBrandingModal';
 
-type Tab = 'dashboard' | 'students' | 'batches' | 'leads' | 'fees' | 'reminders' | 'attendance' | 'expenses' | 'staff';
+type Tab = 'dashboard' | 'students' | 'batches' | 'leads' | 'calendar' | 'fees' | 'reminders' | 'attendance' | 'expenses' | 'staff';
 
 const MainApp = () => {
   const { user, profile, loading, isAdmin, isStaff, hasAccess } = useAuth();
@@ -76,8 +77,8 @@ const MainApp = () => {
           sessionStorage.setItem('visitedTab', 'true');
         }
       } else {
-        // Staff members are ONLY allowed 'leads', 'attendance', 'reminders'
-        const allowedStaffTabs: Tab[] = ['leads', 'attendance', 'reminders'];
+        // Staff members are allowed 'leads', 'calendar', 'attendance', 'reminders'
+        const allowedStaffTabs: Tab[] = ['leads', 'calendar', 'attendance', 'reminders'];
         if (!allowedStaffTabs.includes(activeTab)) {
           setActiveTab('leads');
         }
@@ -246,6 +247,13 @@ const MainApp = () => {
             label="Leads Collection" 
           />
 
+          <NavItem 
+            active={activeTab === 'calendar'} 
+            onClick={() => setActiveTab('calendar')} 
+            icon={<Calendar size={18}/>} 
+            label="Academic Calendar & Timings" 
+          />
+
           {/* ADMIN ONLY TABS */}
           {isAdmin && (
             <>
@@ -370,6 +378,7 @@ const MainApp = () => {
              {/* Component Rendering with Access Protection */}
              {activeTab === 'dashboard' && isAdmin && <Dashboard />}
              {activeTab === 'leads' && <Leads />}
+             {activeTab === 'calendar' && <CalendarView />}
              {activeTab === 'students' && isAdmin && <Students />}
              {activeTab === 'batches' && isAdmin && <Batches />}
              {activeTab === 'fees' && isAdmin && <FeesCollection />}

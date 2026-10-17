@@ -80,5 +80,20 @@ service cloud.firestore {
       allow get, list: if isVerified();
       allow create, update, delete: if isAdmin();
     }
+
+    // --- Teacher Availability Rules ---
+    match /teacher_availability/{availId} {
+      allow get, list, create, update, delete: if hasAccess();
+    }
+
+    // --- Calendar Events Rules ---
+    match /calendar_events/{eventId} {
+      allow get, list, create, update, delete: if hasAccess();
+    }
+
+    // --- Email Logs Rules ---
+    match /email_logs/{logId} {
+      allow get, list, create, update, delete: if hasAccess();
+    }
   }
 }

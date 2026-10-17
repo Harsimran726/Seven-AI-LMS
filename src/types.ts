@@ -131,3 +131,62 @@ export interface Lead {
   createdAt: number;
   updatedAt?: number;
 }
+
+export interface DailyAvailabilityOverride {
+  date: string; // YYYY-MM-DD
+  status: 'available' | 'leave' | 'busy' | 'partial';
+  blockedSlots?: string[]; // e.g. ["09:00", "14:00"] (start time of blocked slots)
+  notes?: string;
+}
+
+export interface TeacherAvailability {
+  id: string;
+  instituteId: 'SevenAI';
+  teacherName: string;
+  teacherEmail?: string;
+  daysOfWeek: string[]; // ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  startTime: string; // HH:mm format, e.g. "09:00"
+  endTime: string; // HH:mm format, e.g. "18:00"
+  slotDurationMins?: number;
+  dailyOverrides?: Record<string, DailyAvailabilityOverride>; // Keyed by YYYY-MM-DD date
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CalendarEvent {
+  id: string;
+  instituteId: 'SevenAI';
+  title: string;
+  type: 'batch' | 'demo' | 'availability' | 'other';
+  teacherName: string;
+  teacherEmail?: string;
+  studentName?: string;
+  studentContact?: string;
+  batchId?: string;
+  leadId?: string;
+  course?: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm (e.g. "10:30")
+  endTime: string; // HH:mm (e.g. "11:30")
+  status: 'scheduled' | 'completed' | 'rescheduled' | 'cancelled';
+  notes?: string;
+  createdByStaffName: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface EmailLog {
+  id: string;
+  instituteId: 'SevenAI';
+  toEmail: string;
+  teacherName: string;
+  subject: string;
+  body: string;
+  demoTitle: string;
+  date: string;
+  time: string;
+  sentAt: number;
+  status: 'sent' | 'simulated';
+}
+
