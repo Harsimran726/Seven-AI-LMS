@@ -29,6 +29,7 @@ const MainApp = () => {
   const [activeTab, setActiveTab] = useState<Tab>('leads');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState(false);
 
   // Settings & Profile Photo Modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -97,10 +98,20 @@ const MainApp = () => {
     );
   }
 
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'sevenaiinstitute.store';
+
+  const copyHostToClipboard = () => {
+    navigator.clipboard.writeText(currentHost);
+    setCopiedDomain(true);
+    setTimeout(() => setCopiedDomain(false), 2000);
+  };
+
   if (!user) {
+    const isDomainError = authError?.includes('Domain Unauthorized') || authError?.includes('unauthorized-domain');
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 font-sans text-slate-900 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
-        <div className="bg-white p-8 border border-slate-200/20 shadow-2xl rounded-2xl max-w-sm w-full text-center relative overflow-hidden backdrop-blur-xl">
+        <div className={`bg-white p-8 border border-slate-200/20 shadow-2xl rounded-2xl w-full text-center relative overflow-hidden backdrop-blur-xl transition-all ${isDomainError ? 'max-w-md' : 'max-w-sm'}`}>
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           
           <img 
@@ -119,12 +130,38 @@ const MainApp = () => {
           </div>
 
           {authError && (
-            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4 text-left flex items-start gap-2.5">
-              <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-[11px] font-bold text-rose-900">Authentication Failed</p>
-                <p className="text-[10px] text-rose-700 mt-0.5 leading-relaxed">{authError}</p>
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4 text-left space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-[11px] font-bold text-rose-900">Authentication Failed</p>
+                  <p className="text-[10px] text-rose-700 mt-0.5 leading-relaxed">{authError}</p>
+                </div>
               </div>
+
+              {isDomainError && (
+                <div className="mt-3 pt-3 border-t border-rose-200/80 text-[11px] space-y-2.5">
+                  <div className="bg-white/80 p-2.5 rounded-lg border border-rose-200 flex items-center justify-between gap-2">
+                    <span className="font-mono font-bold text-slate-800 text-[11px] truncate">{currentHost}</span>
+                    <button
+                      onClick={copyHostToClipboard}
+                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded text-[10px] transition shrink-0 flex items-center gap-1"
+                    >
+                      {copiedDomain ? 'Copied!' : 'Copy Domain'}
+                    </button>
+                  </div>
+
+                  <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-amber-900 text-[10px] leading-relaxed">
+                    <p className="font-bold text-amber-950 mb-1">Quick Fix Instructions:</p>
+                    <ol className="list-decimal list-inside space-y-1 font-medium">
+                      <li>Open <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="underline font-bold text-indigo-700">Firebase Console</a>.</li>
+                      <li>Go to <strong>Authentication</strong> → <strong>Settings</strong> tab.</li>
+                      <li>Under <strong>Authorized domains</strong>, click <strong>Add domain</strong>.</li>
+                      <li>Paste <code className="bg-amber-100 px-1 rounded font-bold text-slate-900">{currentHost}</code> and save.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
