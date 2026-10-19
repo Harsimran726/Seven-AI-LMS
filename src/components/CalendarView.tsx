@@ -301,50 +301,50 @@ export default function CalendarView() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className="p-2.5 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-400">
+              <span className="p-2.5 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-400 shrink-0">
                 <CalendarIcon className="w-6 h-6" />
               </span>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Academic Calendar & Teacher Timing</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Academic Calendar & Teacher Timing</h1>
             </div>
-            <p className="text-sm text-slate-400 max-w-2xl">
-              Schedule student demo classes, track teacher schedules ('available' vs 'booked' slots), toggle daily availability, and send automated teacher email alerts.
+            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
+              Schedule student demo classes, view teacher daily availability directly on calendar dates, manage batch timings, and dispatch instant teacher email alerts.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-2.5 w-full lg:w-auto">
             <button
               onClick={() => {
                 setTargetTeacherForToggle(user?.displayName || 'Harsimran Singh');
                 setTargetDateForToggle(new Date().toISOString().split('T')[0]);
                 setShowToggleStatusModal(true);
               }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl text-sm shadow-md transition-all transform active:scale-95"
+              className="flex items-center justify-center gap-2 px-3.5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-md transition-all active:scale-95 min-h-[44px]"
             >
               <ToggleLeft className="w-4 h-4 text-emerald-200" />
               Toggle Daily Availability
             </button>
             <button
               onClick={() => setShowDemoModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-semibold rounded-xl text-sm shadow-md transition-all transform active:scale-95"
+              className="flex items-center justify-center gap-2 px-3.5 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-semibold rounded-xl text-xs sm:text-sm shadow-md transition-all active:scale-95 min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               Schedule Demo Slot
             </button>
             <button
               onClick={() => setShowBatchModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-sm shadow-md transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 px-3.5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-md transition-all active:scale-95 min-h-[44px]"
             >
               <BookOpen className="w-4 h-4" />
               Add Batch Timing
             </button>
             <button
               onClick={() => setShowEmailLogsDrawer(true)}
-              className="relative flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-sm transition-all"
+              className="relative flex items-center justify-center gap-2 px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs sm:text-sm transition-all min-h-[44px]"
             >
               <Mail className="w-4 h-4 text-indigo-400" />
               Email Logs
               {totalMailSent > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-indigo-500 text-white text-xs font-bold rounded-full">
+                <span className="ml-1 px-1.5 py-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full">
                   {totalMailSent}
                 </span>
               )}
@@ -353,85 +353,85 @@ export default function CalendarView() {
         </div>
 
         {/* Overview Stats Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800">
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-800">
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-3.5 flex items-center gap-3">
+            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-xl font-bold text-white">{totalDemos}</div>
-              <div className="text-xs text-slate-400">Total Demo Slots</div>
+            <div className="min-w-0">
+              <div className="text-lg sm:text-xl font-bold text-white">{totalDemos}</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 truncate">Total Demo Slots</div>
             </div>
           </div>
 
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-3.5 flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-xl font-bold text-white">{totalBatches}</div>
-              <div className="text-xs text-slate-400">Scheduled Batches</div>
+            <div className="min-w-0">
+              <div className="text-lg sm:text-xl font-bold text-white">{totalBatches}</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 truncate">Scheduled Batches</div>
             </div>
           </div>
 
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-3.5 flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0">
               <Users className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-xl font-bold text-white">
+            <div className="min-w-0">
+              <div className="text-lg sm:text-xl font-bold text-white">
                 {DEFAULT_TEACHERS.length}
               </div>
-              <div className="text-xs text-slate-400">Configured Teachers</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 truncate">Configured Teachers</div>
             </div>
           </div>
 
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center gap-3">
-            <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg">
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-3.5 flex items-center gap-3">
+            <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg shrink-0">
               <Send className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-xl font-bold text-white">{totalMailSent}</div>
-              <div className="text-xs text-slate-400">Email Alerts Dispatched</div>
+            <div className="min-w-0">
+              <div className="text-lg sm:text-xl font-bold text-white">{totalMailSent}</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 truncate">Email Alerts Dispatched</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation, View Switcher & Filters */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 shadow-md">
         {/* Date Month Navigation */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-start gap-3">
           <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1">
             <button
               onClick={handlePrevMonth}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition"
+              className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition min-h-[38px] min-w-[38px] flex items-center justify-center"
               title="Previous Month"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={handleToday}
-              className="px-3 py-1 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition"
+              className="px-3 py-1.5 text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg transition min-h-[38px]"
             >
               Today
             </button>
             <button
               onClick={handleNextMonth}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition"
+              className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition min-h-[38px] min-w-[38px] flex items-center justify-center"
               title="Next Month"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <h2 className="text-lg font-bold text-white tracking-wide">{monthName}</h2>
+          <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">{monthName}</h2>
         </div>
 
         {/* View Selector Tabs */}
-        <div className="flex items-center bg-slate-800 border border-slate-700 p-1 rounded-xl">
+        <div className="flex items-center bg-slate-800 border border-slate-700 p-1 rounded-xl w-full md:w-auto">
           <button
             onClick={() => setViewMode('month')}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 md:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition-all min-h-[38px] ${
               viewMode === 'month' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -439,25 +439,25 @@ export default function CalendarView() {
           </button>
           <button
             onClick={() => setViewMode('teachers')}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 md:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition-all min-h-[38px] ${
               viewMode === 'teachers' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Teacher Schedules & Daily Status
+            Teacher Schedules & Availability
           </button>
         </div>
 
         {/* Teacher & Event Filters */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Search Box */}
-          <div className="relative flex-1 md:w-48">
+          <div className="relative flex-1 md:w-44">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search calendar..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white text-xs pl-9 pr-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-800 border border-slate-700 text-white text-xs pl-9 pr-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 min-h-[38px]"
             />
           </div>
 
@@ -465,7 +465,7 @@ export default function CalendarView() {
           <select
             value={selectedTeacherFilter}
             onChange={(e) => setSelectedTeacherFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+            className="bg-slate-800 border border-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-indigo-500 min-h-[38px]"
           >
             <option value="all">All Teachers</option>
             {DEFAULT_TEACHERS.map(t => (
@@ -477,7 +477,7 @@ export default function CalendarView() {
           <select
             value={selectedTypeFilter}
             onChange={(e) => setSelectedTypeFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+            className="bg-slate-800 border border-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-indigo-500 min-h-[38px]"
           >
             <option value="all">All Event Types</option>
             <option value="demo">Demo Slots</option>
@@ -490,9 +490,9 @@ export default function CalendarView() {
       {viewMode === 'month' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           {/* Days Header */}
-          <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-900/80 text-center py-3">
+          <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-900/80 text-center py-2.5">
             {DAYS_OF_WEEK.map((day) => (
-              <div key={day} className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <div key={day} className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <span className="hidden sm:inline">{day}</span>
                 <span className="sm:hidden">{day.slice(0, 3)}</span>
               </div>
@@ -504,61 +504,87 @@ export default function CalendarView() {
             {monthGridDays.map((cell, idx) => {
               const dayEvents = eventsByDate[cell.dateStr] || [];
 
+              // Calculate teacher availability summary for this date
+              const dayTeacherReports = DEFAULT_TEACHERS.map(t =>
+                trackTeacherSchedule(t.name, cell.dateStr, teacherAvailabilities, calendarEvents)
+              );
+              const onLeaveTeachers = dayTeacherReports.filter(r => r.dailyStatus === 'leave');
+              const availableTeachers = dayTeacherReports.filter(r => r.dailyStatus !== 'leave' && r.availableSlotsCount > 0);
+
               return (
                 <div
                   key={idx}
                   onClick={() => setSelectedDayEventsModal(cell.dateStr)}
-                  className={`min-h-[110px] p-2 bg-slate-900/90 transition-colors cursor-pointer hover:bg-slate-800/70 group relative ${
+                  className={`min-h-[90px] sm:min-h-[115px] p-1.5 sm:p-2 bg-slate-900/90 transition-colors cursor-pointer hover:bg-slate-800/70 group relative flex flex-col justify-between ${
                     !cell.isCurrentMonth ? 'opacity-30 bg-slate-950/40' : ''
                   } ${cell.isToday ? 'ring-2 ring-indigo-500/80 bg-indigo-950/20' : ''}`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
-                        cell.isToday
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : cell.isCurrentMonth
-                          ? 'text-slate-300 group-hover:text-white'
-                          : 'text-slate-600'
-                      }`}
-                    >
-                      {cell.dayNum}
-                    </span>
-
-                    {dayEvents.length > 0 && (
-                      <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-full">
-                        {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span
+                        className={`text-[11px] sm:text-xs font-bold w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${
+                          cell.isToday
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : cell.isCurrentMonth
+                            ? 'text-slate-300 group-hover:text-white'
+                            : 'text-slate-600'
+                        }`}
+                      >
+                        {cell.dayNum}
                       </span>
-                    )}
+
+                      {dayEvents.length > 0 && (
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-full">
+                          {dayEvents.length} {dayEvents.length === 1 ? 'evt' : 'evts'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Day Events Preview Pills */}
+                    <div className="space-y-1 overflow-hidden max-h-[60px] sm:max-h-[75px]">
+                      {dayEvents.slice(0, 2).map((evt) => {
+                        const isDemo = evt.type === 'demo';
+
+                        return (
+                          <div
+                            key={evt.id}
+                            className={`px-1 py-0.5 rounded text-[10px] sm:text-[11px] font-medium truncate flex items-center justify-between border ${
+                              isDemo
+                                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                            }`}
+                            title={`${evt.title} (${evt.startTime} - ${evt.endTime}) Teacher: ${evt.teacherName}`}
+                          >
+                            <span className="truncate">
+                              <span className="font-bold mr-0.5">{evt.startTime}</span>
+                              {isDemo ? '🎯' : '📚'} {evt.studentName || evt.title}
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      {dayEvents.length > 2 && (
+                        <div className="text-[9px] sm:text-[10px] font-medium text-slate-400 pl-0.5">
+                          +{dayEvents.length - 2} more...
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Day Events Preview Pills */}
-                  <div className="space-y-1 overflow-hidden max-h-[75px]">
-                    {dayEvents.slice(0, 3).map((evt) => {
-                      const isDemo = evt.type === 'demo';
-
-                      return (
-                        <div
-                          key={evt.id}
-                          className={`px-1.5 py-0.5 rounded text-[11px] font-medium truncate flex items-center justify-between border ${
-                            isDemo
-                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                              : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
-                          }`}
-                          title={`${evt.title} (${evt.startTime} - ${evt.endTime}) Teacher: ${evt.teacherName}`}
-                        >
-                          <span className="truncate">
-                            <span className="font-bold mr-1">{evt.startTime}</span>
-                            {isDemo ? '🎯 Demo' : '📚 Batch'}: {evt.studentName || evt.title}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {dayEvents.length > 3 && (
-                      <div className="text-[10px] font-medium text-slate-400 pl-1">
-                        +{dayEvents.length - 3} more...
-                      </div>
+                  {/* Teacher Availability Indicators directly on calendar date cell */}
+                  <div className="mt-1 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[9px] sm:text-[10px]">
+                    {onLeaveTeachers.length > 0 ? (
+                      <span className="text-rose-400 font-semibold truncate flex items-center gap-1" title={`${onLeaveTeachers.map(r => r.teacherName).join(', ')} on leave`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="hidden sm:inline">{onLeaveTeachers[0].teacherName.split(' ')[0]} Off</span>
+                        <span className="sm:hidden">1 Off</span>
+                      </span>
+                    ) : (
+                      <span className="text-emerald-400/90 font-medium truncate flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="hidden sm:inline">{availableTeachers.length}/{DEFAULT_TEACHERS.length} Free</span>
+                        <span className="sm:hidden">{availableTeachers.length} Free</span>
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1431,74 +1457,236 @@ function ScheduleDemoModal({ onClose, onSuccess }: { onClose: () => void; onSucc
 }
 
 // ---------------------------------------------------------------------------
-// SUBCOMPONENT: Schedule Batch Modal
+// SUBCOMPONENT: Schedule Batch Modal with Multi-Date Support
 // ---------------------------------------------------------------------------
 function ScheduleBatchModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (msg: string) => void }) {
   const { batches, calendarEvents } = useData();
   const { user } = useAuth();
 
+  // Basic Info
   const [batchTitle, setBatchTitle] = useState('Full Stack Web Dev Morning Batch');
   const [teacherName, setTeacherName] = useState('Harsimran Singh');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('12:00');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Date Selection Mode
+  const [dateMode, setDateMode] = useState<'single' | 'range' | 'multiple' | 'since'>('range');
+
+  // Mode 1: Single Date
+  const [singleDate, setSingleDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Mode 2: Range (From -> To)
+  const [fromDate, setFromDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split('T')[0];
+  });
+
+  // Mode 3: Multiple Custom Dates
+  const [pickerDateInput, setPickerDateInput] = useState(new Date().toISOString().split('T')[0]);
+  const [customDatesList, setCustomDatesList] = useState<string[]>([new Date().toISOString().split('T')[0]]);
+
+  // Mode 4: Since (From Date + Duration Weeks)
+  const [sinceDate, setSinceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [sinceDurationWeeks, setSinceDurationWeeks] = useState(4);
+
+  // Shared Weekday Filter for Range & Since modes
+  const [selectedDays, setSelectedDays] = useState<string[]>([
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+  ]);
+
+  const toggleDay = (day: string) => {
+    if (selectedDays.includes(day)) {
+      if (selectedDays.length === 1) return; // Keep at least one
+      setSelectedDays(selectedDays.filter(d => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day]);
+    }
+  };
+
+  // Add custom date to multiple list
+  const handleAddCustomDate = (dateToAdd: string) => {
+    if (!dateToAdd) return;
+    if (!customDatesList.includes(dateToAdd)) {
+      setCustomDatesList([...customDatesList, dateToAdd].sort());
+    }
+  };
+
+  const handleRemoveCustomDate = (dateToRemove: string) => {
+    setCustomDatesList(customDatesList.filter(d => d !== dateToRemove));
+  };
+
+  const handleAddNextWorkingDays = (count: number) => {
+    const dates: string[] = [...customDatesList];
+    let curr = new Date();
+    while (dates.length < count) {
+      const dayName = DAYS_OF_WEEK[curr.getDay()];
+      const dStr = curr.toISOString().split('T')[0];
+      if (dayName !== 'Sunday' && !dates.includes(dStr)) {
+        dates.push(dStr);
+      }
+      curr.setDate(curr.getDate() + 1);
+    }
+    setCustomDatesList(dates.sort());
+  };
+
+  // Calculate target dates list based on mode
+  const calculatedDates = useMemo(() => {
+    if (dateMode === 'single') {
+      return singleDate ? [singleDate] : [];
+    }
+
+    if (dateMode === 'range') {
+      if (!fromDate || !toDate || fromDate > toDate) return [];
+      const dates: string[] = [];
+      const current = new Date(fromDate + 'T00:00:00');
+      const end = new Date(toDate + 'T00:00:00');
+
+      while (current <= end) {
+        const dayName = DAYS_OF_WEEK[current.getDay()];
+        if (selectedDays.includes(dayName)) {
+          const y = current.getFullYear();
+          const m = String(current.getMonth() + 1).padStart(2, '0');
+          const d = String(current.getDate()).padStart(2, '0');
+          dates.push(`${y}-${m}-${d}`);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    if (dateMode === 'multiple') {
+      return [...customDatesList].sort();
+    }
+
+    if (dateMode === 'since') {
+      if (!sinceDate) return [];
+      const dates: string[] = [];
+      const current = new Date(sinceDate + 'T00:00:00');
+      const end = new Date(current);
+      end.setDate(end.getDate() + (sinceDurationWeeks * 7));
+
+      while (current <= end) {
+        const dayName = DAYS_OF_WEEK[current.getDay()];
+        if (selectedDays.includes(dayName)) {
+          const y = current.getFullYear();
+          const m = String(current.getMonth() + 1).padStart(2, '0');
+          const d = String(current.getDate()).padStart(2, '0');
+          dates.push(`${y}-${m}-${d}`);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    return [];
+  }, [dateMode, singleDate, fromDate, toDate, sinceDate, sinceDurationWeeks, selectedDays, customDatesList]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (calculatedDates.length === 0) {
+      alert('Please select at least one valid date for the batch schedule.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const selectedTeacherObj = DEFAULT_TEACHERS.find(t => t.name === teacherName);
       const teacherEmail = selectedTeacherObj?.email || `${teacherName.toLowerCase().replace(/[^a-z0-9]/g, '')}@sevenai.edu.in`;
 
-      await addDoc(collection(db, 'calendar_events'), {
-        instituteId: 'SevenAI',
-        title: batchTitle,
-        type: 'batch',
-        teacherName,
-        teacherEmail,
-        date,
-        startTime,
-        endTime,
-        status: 'scheduled',
-        notes,
-        createdByStaffName: user?.displayName || user?.email || 'Admin',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+      // Save calendar event for every calculated date
+      const promises = calculatedDates.map(dStr => {
+        return addDoc(collection(db, 'calendar_events'), {
+          instituteId: 'SevenAI',
+          title: batchTitle,
+          type: 'batch',
+          teacherName,
+          teacherEmail,
+          date: dStr,
+          startTime,
+          endTime,
+          status: 'scheduled',
+          notes,
+          createdByStaffName: user?.displayName || user?.email || 'Admin',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
       });
 
-      onSuccess(`Batch timing "${batchTitle}" added to calendar!`);
+      await Promise.all(promises);
+
+      onSuccess(`Successfully added batch timing "${batchTitle}" across ${calculatedDates.length} date(s)!`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'calendar_events');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const WEEKDAYS_SHORT = [
+    { name: 'Monday', label: 'Mon' },
+    { name: 'Tuesday', label: 'Tue' },
+    { name: 'Wednesday', label: 'Wed' },
+    { name: 'Thursday', label: 'Thu' },
+    { name: 'Friday', label: 'Fri' },
+    { name: 'Saturday', label: 'Sat' },
+    { name: 'Sunday', label: 'Sun' },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
           <div className="flex items-center gap-2.5">
             <span className="p-2 bg-indigo-500/15 text-indigo-400 rounded-xl">
               <BookOpen className="w-5 h-5" />
             </span>
-            <h3 className="text-base font-bold text-white">Add Batch Schedule</h3>
+            <div>
+              <h3 className="text-base font-bold text-white">Add Batch Schedule & Timings</h3>
+              <p className="text-xs text-slate-400">Schedule single date, date ranges, custom multiple dates, or recurring schedules</p>
+            </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Batch / Class Name *</label>
-            <input
-              type="text"
-              required
-              value={batchTitle}
-              onChange={(e) => setBatchTitle(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+          {/* Batch Title / Select Existing Batch */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Select Existing Batch (Optional)</label>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) setBatchTitle(e.target.value);
+                }}
+                className="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+              >
+                <option value="">-- Choose Batch --</option>
+                {batches.map(b => (
+                  <option key={b.id} value={`${b.course} (${b.identifier})`}>
+                    {b.identifier} - {b.course}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Batch / Class Title *</label>
+              <input
+                type="text"
+                required
+                value={batchTitle}
+                onChange={(e) => setBatchTitle(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+              />
+            </div>
           </div>
 
+          {/* Teacher Selection */}
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Teacher *</label>
             <select
@@ -1507,55 +1695,308 @@ function ScheduleBatchModal({ onClose, onSuccess }: { onClose: () => void; onSuc
               className="w-full bg-slate-800 border border-slate-700 text-white font-semibold text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
             >
               {DEFAULT_TEACHERS.map(t => (
-                <option key={t.name} value={t.name}>{t.name}</option>
+                <option key={t.name} value={t.name}>{t.name} ({t.defaultStart} - {t.defaultEnd})</option>
               ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Date</label>
+          {/* Date Selection Mode Tabs */}
+          <div className="pt-2">
+            <label className="block text-xs font-medium text-slate-300 mb-2">Date Selection Option</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-950/80 border border-slate-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setDateMode('single')}
+                className={`py-2 px-2 text-xs font-semibold rounded-lg transition ${
+                  dateMode === 'single'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                Single Date
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDateMode('range')}
+                className={`py-2 px-2 text-xs font-semibold rounded-lg transition ${
+                  dateMode === 'range'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                From / To Range
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDateMode('multiple')}
+                className={`py-2 px-2 text-xs font-semibold rounded-lg transition ${
+                  dateMode === 'multiple'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                Multiple Dates
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDateMode('since')}
+                className={`py-2 px-2 text-xs font-semibold rounded-lg transition ${
+                  dateMode === 'since'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                Since Date
+              </button>
+            </div>
+          </div>
+
+          {/* MODE 1: Single Date */}
+          {dateMode === 'single' && (
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+              <label className="block text-xs font-medium text-slate-300 mb-1">Select Single Date</label>
               <input
                 type="date"
                 required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                value={singleDate}
+                onChange={(e) => setSingleDate(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
               />
             </div>
+          )}
 
+          {/* MODE 2: Date Range (From - To) */}
+          {dateMode === 'range' && (
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">From Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">To Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Day of Week Selector */}
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Repeat Days in Range</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {WEEKDAYS_SHORT.map((wd) => {
+                    const isSelected = selectedDays.includes(wd.name);
+                    return (
+                      <button
+                        key={wd.name}
+                        type="button"
+                        onClick={() => toggleDay(wd.name)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border border-indigo-500 shadow'
+                            : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200'
+                        }`}
+                      >
+                        {wd.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 3: Multiple Custom Dates Picker */}
+          {dateMode === 'multiple' && (
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={pickerDateInput}
+                  onChange={(e) => setPickerDateInput(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddCustomDate(pickerDateInput)}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition"
+                >
+                  + Add Date
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddNextWorkingDays(5)}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 rounded-xl transition"
+                >
+                  + Next 5 Days
+                </button>
+              </div>
+
+              {/* Custom Dates List Chips */}
+              <div>
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                  <span>Selected Dates ({customDatesList.length}):</span>
+                  {customDatesList.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomDatesList([])}
+                      className="text-rose-400 hover:text-rose-300 text-[11px] font-semibold"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                {customDatesList.length === 0 ? (
+                  <div className="text-xs text-slate-500 italic p-2 text-center">
+                    No custom dates added. Choose a date above and click "+ Add Date".
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-slate-900 border border-slate-800 rounded-xl">
+                    {customDatesList.map((dStr) => (
+                      <span
+                        key={dStr}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-950/60 border border-indigo-500/40 text-indigo-200 text-xs rounded-lg font-mono font-medium"
+                      >
+                        {dStr}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomDate(dStr)}
+                          className="hover:text-rose-400 text-slate-400 transition"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* MODE 4: Since Date + Duration */}
+          {dateMode === 'since' && (
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Since / Starting From Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={sinceDate}
+                    onChange={(e) => setSinceDate(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Duration (Weeks)</label>
+                  <select
+                    value={sinceDurationWeeks}
+                    onChange={(e) => setSinceDurationWeeks(Number(e.target.value))}
+                    className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value={2}>2 Weeks</option>
+                    <option value={4}>4 Weeks (1 Month)</option>
+                    <option value={8}>8 Weeks (2 Months)</option>
+                    <option value={12}>12 Weeks (3 Months)</option>
+                    <option value={16}>16 Weeks (4 Months)</option>
+                    <option value={24}>24 Weeks (6 Months)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Day of Week Selector */}
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Repeat Days</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {WEEKDAYS_SHORT.map((wd) => {
+                    const isSelected = selectedDays.includes(wd.name);
+                    return (
+                      <button
+                        key={wd.name}
+                        type="button"
+                        onClick={() => toggleDay(wd.name)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border border-indigo-500 shadow'
+                            : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200'
+                        }`}
+                      >
+                        {wd.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Time Slot Picker */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Start Time</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Start Time *</label>
               <input
                 type="time"
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">End Time</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">End Time *</label>
               <input
                 type="time"
                 required
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Notes</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Batch Notes / Topic Details</label>
             <input
               type="text"
-              placeholder="e.g. Module 3: Database & ORMs"
+              placeholder="e.g. Module 3: Database, ORMs & Next.js API Routes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-indigo-500"
             />
+          </div>
+
+          {/* Target Dates Calculation Banner */}
+          <div className="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-indigo-400 shrink-0" />
+              <div className="text-xs">
+                <span className="text-slate-300 font-bold">Calculated Schedule: </span>
+                <span className="text-emerald-400 font-extrabold">{calculatedDates.length} date(s) selected</span>
+              </div>
+            </div>
+
+            {calculatedDates.length > 0 && (
+              <span className="text-[11px] text-indigo-300 font-mono">
+                {calculatedDates[0]} {calculatedDates.length > 1 ? `to ${calculatedDates[calculatedDates.length - 1]}` : ''}
+              </span>
+            )}
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-800">
@@ -1568,9 +2009,12 @@ function ScheduleBatchModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition"
+              disabled={isSubmitting || calculatedDates.length === 0}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition disabled:opacity-50"
             >
-              Save Batch Timing
+              {isSubmitting
+                ? `Scheduling for ${calculatedDates.length} Date(s)...`
+                : `Save Batch Schedule (${calculatedDates.length} Dates)`}
             </button>
           </div>
         </form>
@@ -1807,7 +2251,7 @@ function EmailLogsDrawer({ onClose }: { onClose: () => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// SUBCOMPONENT: Day Agenda Modal
+// SUBCOMPONENT: Day Agenda & Teacher Availability Modal
 // ---------------------------------------------------------------------------
 function DayEventsModal({
   dateStr,
@@ -1822,6 +2266,9 @@ function DayEventsModal({
   onDeleteEvent: (id: string) => void;
   onOpenScheduleDemo: () => void;
 }) {
+  const { teacherAvailabilities, calendarEvents } = useData();
+  const [activeTab, setActiveTab] = useState<'events' | 'teachers'>('events');
+
   const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -1829,80 +2276,151 @@ function DayEventsModal({
     day: 'numeric'
   });
 
+  // Calculate teacher reports for this date
+  const teacherReports = DEFAULT_TEACHERS.map(t =>
+    trackTeacherSchedule(t.name, dateStr, teacherAvailabilities, calendarEvents)
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg sm:max-w-xl overflow-hidden shadow-2xl font-sans">
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">{formattedDate}</h3>
-            <p className="text-xs text-slate-400">{events.length} event(s) scheduled for this day</p>
+            <h3 className="text-sm sm:text-base font-bold text-white">{formattedDate}</h3>
+            <p className="text-xs text-slate-400">{events.length} event(s) scheduled on this day</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
-          {events.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-xs">
-              No events scheduled on this date.
-            </div>
-          ) : (
-            events.map((evt) => {
-              const isDemo = evt.type === 'demo';
-              return (
-                <div
-                  key={evt.id}
-                  className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${
-                    isDemo
-                      ? 'bg-amber-950/20 border-amber-500/30'
-                      : 'bg-indigo-950/20 border-indigo-500/30'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        isDemo ? 'bg-amber-500/20 text-amber-300' : 'bg-indigo-500/20 text-indigo-300'
-                      }`}>
-                        {isDemo ? '🎯 Demo Class' : '📚 Student Batch'}
-                      </span>
-                      <span className="text-xs font-bold text-white">{evt.startTime} - {evt.endTime}</span>
-                    </div>
-
-                    <h4 className="text-sm font-bold text-slate-100">{evt.title}</h4>
-
-                    <div className="text-xs text-slate-400 mt-1 space-y-0.5">
-                      <div>Teacher: <span className="text-slate-200 font-semibold">{evt.teacherName}</span></div>
-                      {evt.studentName && <div>Student: <span className="text-slate-200">{evt.studentName} ({evt.studentContact || 'N/A'})</span></div>}
-                      {evt.course && <div>Course: <span className="text-slate-200">{evt.course}</span></div>}
-                      {evt.notes && <div className="text-slate-400 italic mt-1">"{evt.notes}"</div>}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => onDeleteEvent(evt.id)}
-                    className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition"
-                    title="Delete Event"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              );
-            })
-          )}
+        {/* Modal Tabs */}
+        <div className="flex border-b border-slate-800 bg-slate-950/60 p-1">
+          <button
+            onClick={() => setActiveTab('events')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+              activeTab === 'events' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Scheduled Classes & Demos ({events.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('teachers')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+              activeTab === 'teachers' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Teacher Availability ({DEFAULT_TEACHERS.length})
+          </button>
         </div>
 
-        <div className="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-900/90">
+        {/* Tab 1: Scheduled Events */}
+        {activeTab === 'events' && (
+          <div className="p-4 sm:p-5 space-y-3 max-h-[55vh] overflow-y-auto">
+            {events.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 text-xs">
+                No events scheduled on this date.
+              </div>
+            ) : (
+              events.map((evt) => {
+                const isDemo = evt.type === 'demo';
+                return (
+                  <div
+                    key={evt.id}
+                    className={`p-3.5 sm:p-4 rounded-xl border flex items-start justify-between gap-3 ${
+                      isDemo
+                        ? 'bg-amber-950/20 border-amber-500/30'
+                        : 'bg-indigo-950/20 border-indigo-500/30'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          isDemo ? 'bg-amber-500/20 text-amber-300' : 'bg-indigo-500/20 text-indigo-300'
+                        }`}>
+                          {isDemo ? '🎯 Demo Class' : '📚 Student Batch'}
+                        </span>
+                        <span className="text-xs font-bold text-white">{evt.startTime} - {evt.endTime}</span>
+                      </div>
+
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-100">{evt.title}</h4>
+
+                      <div className="text-xs text-slate-400 mt-1 space-y-0.5">
+                        <div>Teacher: <span className="text-slate-200 font-semibold">{evt.teacherName}</span></div>
+                        {evt.studentName && <div>Student: <span className="text-slate-200">{evt.studentName} ({evt.studentContact || 'N/A'})</span></div>}
+                        {evt.course && <div>Course: <span className="text-slate-200">{evt.course}</span></div>}
+                        {evt.notes && <div className="text-slate-400 italic mt-1">"{evt.notes}"</div>}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => onDeleteEvent(evt.id)}
+                      className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      title="Delete Event"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Teacher Availability for Selected Date */}
+        {activeTab === 'teachers' && (
+          <div className="p-4 sm:p-5 space-y-3 max-h-[55vh] overflow-y-auto">
+            {teacherReports.map((report) => (
+              <div key={report.teacherName} className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+                    <span className="text-xs sm:text-sm font-bold text-white">{report.teacherName}</span>
+                  </div>
+
+                  {report.dailyStatus === 'leave' ? (
+                    <span className="px-2 py-0.5 bg-rose-500/15 text-rose-300 border border-rose-500/30 rounded-full text-[10px] font-bold">
+                      🔴 On Leave
+                    </span>
+                  ) : report.dailyStatus === 'busy' ? (
+                    <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded-full text-[10px] font-bold">
+                      🟠 Fully Busy
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-full text-[10px] font-bold">
+                      🟢 {report.availableSlotsCount} Slots Free
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-[11px] text-slate-300 flex items-center justify-between bg-slate-900/60 p-2 rounded-lg">
+                  <span>Shift: {report.workingHours.startTime} - {report.workingHours.endTime}</span>
+                  <span className="text-slate-400">{report.bookedSlotsCount} Booked Slot(s)</span>
+                </div>
+
+                {report.dailyOverrideNote && (
+                  <div className="text-[11px] text-indigo-300 italic bg-indigo-950/30 p-2 rounded-lg border border-indigo-500/20">
+                    Note: "{report.dailyOverrideNote}"
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-900/90 gap-2">
           <button
             onClick={onOpenScheduleDemo}
-            className="flex items-center gap-2 px-3.5 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl shadow hover:bg-amber-400 transition"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl shadow hover:bg-amber-400 transition min-h-[40px]"
           >
             <Plus className="w-4 h-4" />
             Book Demo On This Date
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-medium rounded-xl"
+            className="px-4 py-2.5 bg-slate-800 text-slate-300 text-xs font-medium rounded-xl hover:bg-slate-700 transition min-h-[40px]"
           >
             Close
           </button>

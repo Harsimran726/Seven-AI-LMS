@@ -33,6 +33,12 @@ export interface Student {
   createdByStaffId: string;
   createdByStaffName: string;
   startDate?: string;
+  registrationFeeStatus?: 'done' | 'pending';
+  registrationFeeAmount?: number;
+  registrationFeeDate?: string;
+  admissionFeeStatus?: 'done' | 'pending';
+  admissionFeeAmount?: number;
+  admissionFeeDate?: string;
   createdAt: number;
   updatedAt: number;
 }

@@ -7,11 +7,12 @@ import { format, parseISO, isWithinInterval, startOfYear, endOfYear, startOfMont
 import { 
   CheckCircle2, Trash2, UserCheck, Wallet, Receipt, 
   BarChart3, Calendar, Search, Filter, AlertCircle, ArrowUpRight,
-  CreditCard, ShieldCheck, Download, History
+  CreditCard, ShieldCheck, Download, History, Printer
 } from 'lucide-react';
 import { FEES_COLLECTORS } from '../lib/constants';
-import { Student } from '../types';
+import { Student, Transaction } from '../types';
 import { StudentPaymentHistoryModal } from './StudentPaymentHistoryModal';
+import { FeeSlipModal } from './FeeSlipModal';
 
 type FeeTab = 'fees' | 'history' | 'reports' | 'office';
 
@@ -21,6 +22,7 @@ const FeesCollection = () => {
   
   const [activeTab, setActiveTab] = useState<FeeTab>('fees');
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<Student | null>(null);
+  const [activeFeeSlipData, setActiveFeeSlipData] = useState<{ student: Student; transaction: Transaction } | null>(null);
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,7 +148,9 @@ const FeesCollection = () => {
     setSuccess(false);
     try {
       const docRef = doc(collection(db, 'transactions'));
-      await setDoc(docRef, {
+      const now = Date.now();
+      const newTxnPayload: any = {
+        id: docRef.id,
         instituteId: 'SevenAI',
         studentId: formData.studentId,
         amount: Number(formData.amount),
@@ -156,11 +160,17 @@ const FeesCollection = () => {
         collectedBy: formData.collectedBy,
         staffId: user.uid,
         staffName: user.displayName || user.email || 'Staff',
-        createdAt: Date.now()
-      });
+        createdAt: now
+      };
+      await setDoc(docRef, newTxnPayload);
       setSuccess(true);
+
+      const targetStudent = students.find(s => s.id === formData.studentId);
+      if (targetStudent) {
+        setActiveFeeSlipData({ student: targetStudent, transaction: newTxnPayload as Transaction });
+      }
+
       setFormData(prev => ({...prev, studentId: '', amount: '' }));
-      
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'transactions');
@@ -833,6 +843,15 @@ const FeesCollection = () => {
         <StudentPaymentHistoryModal
           student={selectedStudentForHistory}
           onClose={() => setSelectedStudentForHistory(null)}
+        />
+      )}
+
+      {/* FEE SLIP PRINTABLE MODAL */}
+      {activeFeeSlipData && (
+        <FeeSlipModal
+          student={activeFeeSlipData.student}
+          transaction={activeFeeSlipData.transaction}
+          onClose={() => setActiveFeeSlipData(null)}
         />
       )}
     </div>

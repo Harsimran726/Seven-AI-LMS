@@ -5,8 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { format, parseISO } from 'date-fns';
-import { X, Receipt, CheckCircle2, AlertCircle, Clock, Plus, Phone, Mail, BookOpen, Shield, CreditCard, Wallet, Calendar } from 'lucide-react';
+import { X, Receipt, CheckCircle2, AlertCircle, Clock, Plus, Phone, Mail, BookOpen, Shield, CreditCard, Wallet, Calendar, Printer } from 'lucide-react';
 import { FEES_COLLECTORS } from '../lib/constants';
+import { FeeSlipModal } from './FeeSlipModal';
 
 interface Props {
   student: Student;
@@ -44,6 +45,7 @@ export const StudentPaymentHistoryModal: React.FC<Props> = ({ student, onClose }
   const [collectedBy, setCollectedBy] = useState(FEES_COLLECTORS[0] || 'Harsimran Singh');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [activeFeeSlipTransaction, setActiveFeeSlipTransaction] = useState<Transaction | null>(null);
 
   const handleRecordFee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,6 +292,15 @@ export const StudentPaymentHistoryModal: React.FC<Props> = ({ student, onClose }
                       <td className="px-4 py-3 text-slate-600 font-medium">
                         {t.collectedBy || t.staffName}
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => setActiveFeeSlipTransaction(t)}
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-bold inline-flex items-center gap-1 transition"
+                          title="Print Fee Receipt"
+                        >
+                          <Printer size={12} /> Print Receipt
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -314,6 +325,14 @@ export const StudentPaymentHistoryModal: React.FC<Props> = ({ student, onClose }
           </button>
         </div>
       </div>
+
+      {activeFeeSlipTransaction && (
+        <FeeSlipModal
+          student={student}
+          transaction={activeFeeSlipTransaction}
+          onClose={() => setActiveFeeSlipTransaction(null)}
+        />
+      )}
     </div>
   );
 };
