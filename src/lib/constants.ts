@@ -38,3 +38,15 @@ export const LEAD_SOURCES = [
   'word of mouth',
   'Crosing in front of institute'
 ] as const;
+
+export const EXPENSE_CATEGORIES = [
+  'Salary',
+  'Rent',
+  'Utilities',
+  'Marketing & Advertising',
+  'Maintenance & Repairs',
+  'Office Supplies',
+  'Software & Tech',
+  'Events & Demos',
+  'Miscellaneous'
+] as const;

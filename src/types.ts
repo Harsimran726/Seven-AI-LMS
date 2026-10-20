@@ -78,6 +78,8 @@ export interface Expense {
   date: string; // ISO date or yyyy-MM-dd
   category: string;
   paidBy?: string;
+  salaryRecipient?: string;
+  note?: string;
   staffId: string;
   staffName: string;
   createdAt: number;
